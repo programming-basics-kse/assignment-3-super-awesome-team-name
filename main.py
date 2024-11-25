@@ -27,8 +27,6 @@ def get_data() -> list[dict]:
 
         return data
 
-print(" ".join(get_args()['team']))
-
 def validation(data_list: list[dict], user_input: dict) -> list or str:
 
     if 1992 not in [int(x['year']) for x in data_list]:
@@ -41,3 +39,18 @@ def validation(data_list: list[dict], user_input: dict) -> list or str:
         return f"There are no {"".join(user_input['team'])} team in {user_input['year']} olympics games"
 
     return team_list
+
+def  ten_medalists_summary(team: list) -> None:
+    gold = [x for x in team if x['medal'] == 'Gold']
+    silver = [x for x in team if x['medal'] == 'Silver']
+    bronze = [x for x in team if x['medal'] == 'Bronze']
+
+    for x, key in enumerate(gold + silver + bronze):
+        if x < 10:
+            print(f"{x + 1}: {key['name']} - {key['sport']} - {key['medal']}")
+            continue
+        break
+
+    print(f"\nGold: {len(gold)}, Silver: {len(silver)}, Bronze: {len(bronze)}")
+
+ten_medalists_summary(validation(get_data(), get_args()))
