@@ -1,5 +1,6 @@
 import argparse
 
+
 def get_args() -> dict:
     parser = argparse.ArgumentParser("Sample Program")
     parser.add_argument("filepath", type=str, help="Path to the file")
@@ -10,4 +11,33 @@ def get_args() -> dict:
     args = vars(parser.parse_args())
     return args
 
-print(get_args())
+def get_data() -> list[dict]:
+    with open('athlete_events.tsv', "r") as file:
+
+        data = []
+        for line in [x.replace("\n", "").split("\t") for x in file.readlines()][1:]:
+            data.append({
+                "name": line[1],
+                "team": line[6],
+                "noc": line[7],
+                "year": line[9],
+                "sport": line[13],
+                "medal": line[14]
+            })
+
+        return data
+
+print(" ".join(get_args()['team']))
+
+def validation(data_list: list[dict], user_input: dict) -> list or str:
+
+    if 1992 not in [int(x['year']) for x in data_list]:
+        return f"There were no olympics games that year"
+
+    team_list = ([x for x in data_list if int(x['year']) == user_input['year'] and x['team'] in " ".join(user_input['team'])]
+                 + [x for x in data_list if int(x['year']) == user_input['year'] and x['noc'] in " ".join(user_input['team'])])
+
+    if not team_list:
+        return f"There are no {"".join(user_input['team'])} team in {user_input['year']} olympics games"
+
+    return team_list
