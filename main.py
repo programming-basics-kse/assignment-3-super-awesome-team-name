@@ -6,11 +6,12 @@ def get_args() -> dict:
     parser.add_argument("filepath", type=str, help="Path to the file")
     parser.add_argument("-medals", nargs="+", metavar="team_name year", help="Team name and the year at the end")
     parser.add_argument("-total", type=int, help="Total statistic of the year")
+    parser.add_argument("-overall", nargs="+", metavar="team_name1 team_name2 ..." , help="List of countries names")
     parser.add_argument("-output", type=str, help="Name of the output file")
     args = vars(parser.parse_args())
     return args
 
-def get_medals(args: dict):
+def get_medals(args: dict) -> dict or str:
     if not args["medals"][-1].isdecimal(): return f"Please write a year at the end"
     args['team'] = args['medals'][:-1]
     args['year'] = int(args['medals'][-1])
@@ -86,6 +87,7 @@ def total_statistic(data_list: list[dict], user_input: dict) -> None:
                         "Total": 0,
                         "Rate": 0
                     }
+
             if data_list[i]['medal'] != "NA":
                 countries[f"{data_list[i]['noc']}"][data_list[i]['medal']] += 1
                 countries[f"{data_list[i]['noc']}"]['Total'] += 1
@@ -104,11 +106,46 @@ def total_statistic(data_list: list[dict], user_input: dict) -> None:
                 print(f"{f'{key}'} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}|"
                       f" Total: {value['Total']}")
 
+def overall(data_list:list[dict], user_input: dict) -> None:
+    overall_dict = {}
+
+    for element in data_list:
+
+        if element['team'] in " ".join(user_input['overall']):
+
+            if element['team'] not in ["".join([*el]) for el in overall_dict]:
+                overall_dict[element['team']] = {}
+
+
+            if element['year'] not in overall_dict[element['team']]:
+                overall_dict[element['team']][element['year']] = \
+                {
+                    "Gold": 0,
+                    "Silver": 0,
+                    "Bronze": 0,
+                    "Total": 0,
+                    "Rate": 0
+                }
+
+            if element['medal'] != "NA":
+                overall_dict[element['team']][element['year']]['Total'] += 1
+                overall_dict[element['team']][element['year']][element['medal']] += 1
+
+                match element['medal']:
+                    case "Gold": overall_dict[element['team']][element['year']]['Rate'] += 3
+                    case "Silver": overall_dict[element['team']][element['year']]['Rate'] += 2
+                    case "Bronze": overall_dict[element['team']][element['year']]['Rate'] += 1
+
+
+
+    print(overall_dict)
+
 def main():
     args = get_args()
 
     if args['total']: total_statistic(get_data(), args)
     elif args['medals']: ten_medalists_summary(validation(get_data(), get_medals(args)))
+    elif args['overall']: overall(get_data(), args)
     else: print("Write either -medals or -total")
 
 main()
