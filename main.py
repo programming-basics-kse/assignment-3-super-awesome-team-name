@@ -7,6 +7,7 @@ def get_args() -> dict:
     parser.add_argument("-medals", nargs="+", metavar="team_name year", help="Team name and the year at the end")
     parser.add_argument("-total", type=int, help="Total statistic of the year")
     parser.add_argument("-overall", nargs="+", metavar="team_name1 team_name2 ..." , help="List of countries names")
+    parser.add_argument("-interactive", action='store_true', help="Interactive mode")
     parser.add_argument("-output", type=str, help="Name of the output file")
     args = vars(parser.parse_args())
     return args
@@ -35,6 +36,7 @@ def get_data() -> list[dict]:
                 "team": line[6],
                 "noc": line[7],
                 "year": line[9],
+                "place": line[11],
                 "sport": line[13],
                 "medal": line[14]
             })
@@ -143,12 +145,54 @@ def overall(data: dict) -> None:
         element = sorted(element.items(), key=lambda x: x[1]['Rate'], reverse=True)[0]
         print(f"{key} — {element[0]} — Total: {element[1]['Total']}")
 
+def interactive(data_list: list[dict]) -> None:
+    country = input("Enter a country name: ")
+
+    output = {}
+    for element in data_list:
+
+        if country in element['team']:
+
+            if country not in output: output[country] = {}
+
+            if element['year'] not in output[country]:
+                output[country][element['year']] = \
+                    {
+                        "Gold": 0,
+                        "Silver": 0,
+                        "Bronze": 0,
+                        "Total": 0,
+                        "Rate": 0,
+                        "Place": element['place']
+                    }
+
+            if element['medal'] != 'NA':
+                output[country][element['year']][element['medal']] += 1
+                output[country][element['year']]['Total'] += 1
+
+            match element['medal']:
+                case "Gold": output[country][element['year']]['Rate'] += 3
+                case "Silver": output[country][element['year']]['Rate'] += 2
+                case "Bronze": output[country][element['year']]['Rate'] += 1
+
+    for key, element in output.items():
+        element = sorted(element.items(), key=lambda x: x[1]['Rate'], reverse=True)
+        print(f"First | year: {sorted(dict(element).items(), key=lambda x: x[0])[0][0]}, "
+              f"place: {sorted(dict(element).items(), key=lambda x: x[0])[0][1]['Place']}\n")
+        print(f"Best | {element[0][0]}, Total: {element[0][1]['Total']}")
+        print(f"Worst | {element[-1][0]}, Total: {element[-1][1]['Total']}\n")
+
+        print(f"Average | Bronze: {round(sum([x[1]['Bronze'] for x in element]) / len(element))}", end="\t")
+        print(f"Silver: {round(sum([x[1]['Silver'] for x in element]) / len(element))}", end="\t")
+        print(f"Gold: {round(sum([x[1]['Gold'] for x in element]) / len(element))}", end="\t")
+
 def main():
     args = get_args()
 
     if args['total']: total_statistic(get_data(), args)
     elif args['medals']: ten_medalists_summary(validation(get_data(), get_medals(args)))
     elif args['overall']: overall(country_data(get_data(), args))
+    elif args['interactive']: interactive(get_data())
     else: print("Write -medals or -total or -overall")
 
 main()
