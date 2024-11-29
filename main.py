@@ -58,7 +58,7 @@ def validation(data_list: list[dict], user_input: dict) -> list or bool:
 
     return team_list
 
-def ten_medalists_summary(team: list) -> None or str:
+def ten_medalists_summary(team: list, output_file=None) -> None:
     if not team: return None
     gold = [x for x in team if x['medal'] == 'Gold']
     silver = [x for x in team if x['medal'] == 'Silver']
@@ -66,15 +66,23 @@ def ten_medalists_summary(team: list) -> None or str:
 
     for x, key in enumerate(gold + silver + bronze):
         if x < 10:
-            print(f"{x + 1}: {key['name']} - {key['sport']} - {key['medal']}")
+            output = f"{x + 1}: {key['name']} - {key['sport']} - {key['medal']}\n"
+            if output_file: output_file.write(output)
+            print(output, end="")
             continue
         break
 
-    print(f"\nGold: {len(gold)}, Silver: {len(silver)}, Bronze: {len(bronze)}")
+    summary = f"\nGold: {len(gold)}, Silver: {len(silver)}, Bronze: {len(bronze)}\n"
 
-def total_statistic(data_list: list[dict], user_input: dict) -> None:
+    if output_file: output_file.write(summary)
+    print(summary)
+
+
+def total_statistic(data_list: list[dict], user_input: dict, output_file=None) -> None:
     if user_input['total'] not in [int(x['year']) for x in data_list]:
-        print(f"There were no olympics games that year")
+        output = f"There were no olympics games that year\n"
+        if output_file: output_file.write(output)
+        print(output)
 
     countries = {}
 
@@ -99,14 +107,19 @@ def total_statistic(data_list: list[dict], user_input: dict) -> None:
                 if data_list[i]['medal'] == "Bronze": countries[f"{data_list[i]['noc']}"]['Rate'] += 1
 
     countries = dict(sorted(countries.items(), key=lambda x: x[1]['Rate'], reverse=True))
+
     for key, value in countries.items():
         if value['Gold'] + value['Silver'] + value['Bronze']:
             try:
-                print(f"{get_noc()[f'{key}']} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}|"
-                      f" Total: {value['Total']}")
+                output = f"{get_noc()[f'{key}']} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}| Total: {value['Total']}\n"
+                if output_file: output_file.write(output)
+                print(output, end="")
+
             except:
-                print(f"{f'{key}'} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}|"
-                      f" Total: {value['Total']}")
+                output = f"{key} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}| Total: {value['Total']}\n"
+                if output_file: output_file.write(output)
+                print(output, end="")
+
 
 def country_data(data_list:list[dict], user_input: dict) -> dict:
     overall_dict = {}
@@ -140,31 +153,31 @@ def country_data(data_list:list[dict], user_input: dict) -> dict:
 
     return overall_dict
 
-def overall(data: dict) -> None:
+def overall(data: dict, output_file=None) -> None:
     for key, element in data.items():
         element = sorted(element.items(), key=lambda x: x[1]['Rate'], reverse=True)[0]
-        print(f"{key} — {element[0]} — Total: {element[1]['Total']}")
+        output = f"{key} — {element[0]} — Total: {element[1]['Total']}\n"
+        if output_file: output_file.write(output)
+        print(output, end="")
 
-def interactive(data_list: list[dict]) -> None:
+
+def interactive(data_list: list[dict], output_file=None) -> None:
     country = input("Enter a country name: ")
 
     output = {}
     for element in data_list:
-
         if country in element['team'] or country in element['noc']:
-
             if country not in output: output[country] = {}
 
             if element['year'] not in output[country]:
-                output[country][element['year']] = \
-                    {
-                        "Gold": 0,
-                        "Silver": 0,
-                        "Bronze": 0,
-                        "Total": 0,
-                        "Rate": 0,
-                        "Place": element['place']
-                    }
+                output[country][element['year']] = {
+                    "Gold": 0,
+                    "Silver": 0,
+                    "Bronze": 0,
+                    "Total": 0,
+                    "Rate": 0,
+                    "Place": element['place']
+                }
 
             if element['medal'] != 'NA':
                 output[country][element['year']][element['medal']] += 1
@@ -177,22 +190,38 @@ def interactive(data_list: list[dict]) -> None:
 
     for key, element in output.items():
         element = sorted(element.items(), key=lambda x: x[1]['Rate'], reverse=True)
-        print(f"First | year: {sorted(dict(element).items(), key=lambda x: x[0])[0][0]}, "
-              f"place: {sorted(dict(element).items(), key=lambda x: x[0])[0][1]['Place']}\n")
-        print(f"Best | {element[0][0]}, Total: {element[0][1]['Total']}")
-        print(f"Worst | {element[-1][0]}, Total: {element[-1][1]['Total']}\n")
+        first_output = f"First | year: {sorted(dict(element).items(), key=lambda x: x[0])[0][0]}, place: {sorted(dict(element).items(), key=lambda x: x[0])[0][1]['Place']}\n"
+        best_output = f"Best | {element[0][0]}, Total: {element[0][1]['Total']}\n"
+        worst_output = f"Worst | {element[-1][0]}, Total: {element[-1][1]['Total']}\n"
 
-        print(f"Average | Bronze: {round(sum([x[1]['Bronze'] for x in element]) / len(element))}", end="\t")
-        print(f"Silver: {round(sum([x[1]['Silver'] for x in element]) / len(element))}", end="\t")
-        print(f"Gold: {round(sum([x[1]['Gold'] for x in element]) / len(element))}", end="\t")
+        avg_output = (f"Average | Bronze: {round(sum([x[1]['Bronze'] for x in element]) / len(element))}\t"
+                      f"Silver: {round(sum([x[1]['Silver'] for x in element]) / len(element))}\t"
+                      f"Gold: {round(sum([x[1]['Gold'] for x in element]) / len(element))}\t")
+
+        output = first_output + "\n" + best_output + worst_output + "\n" + avg_output
+        print(output)
+
+        if output_file: output_file.write(output)
 
 def main():
     args = get_args()
 
-    if args['total']: total_statistic(get_data(), args)
-    elif args['medals']: ten_medalists_summary(validation(get_data(), get_medals(args)))
-    elif args['overall']: overall(country_data(get_data(), args))
-    elif args['interactive']: interactive(get_data())
-    else: print("Write -medals or -total or -overall")
+    output_file = None
+    if args['output']:
+        output_file = open(args['output'], 'w')
+
+    if args['total']:
+        total_statistic(get_data(), args, output_file)
+    elif args['medals']:
+        ten_medalists_summary(validation(get_data(), get_medals(args)), output_file)
+    elif args['overall']:
+        overall(country_data(get_data(), args), output_file)
+    elif args['interactive']:
+        interactive(get_data(), output_file)
+    else:
+        print("Write -medals or -total or -overall")
+
+    if output_file:
+        output_file.close()
 
 main()
