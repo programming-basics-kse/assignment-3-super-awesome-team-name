@@ -113,7 +113,7 @@ def country_data(data_list:list[dict], user_input: dict) -> dict:
 
     for element in data_list:
 
-        if element['team'] in " ".join(user_input['overall']):
+        if element['team'] in " ".join(user_input['overall']) or element['noc'] in " ".join(user_input['overall']):
 
             if element['team'] not in ["".join([*el]) for el in overall_dict]:
                 overall_dict[element['team']] = {}
@@ -151,7 +151,7 @@ def interactive(data_list: list[dict]) -> None:
     output = {}
     for element in data_list:
 
-        if country in element['team']:
+        if country in element['team'] or country in element['noc']:
 
             if country not in output: output[country] = {}
 
