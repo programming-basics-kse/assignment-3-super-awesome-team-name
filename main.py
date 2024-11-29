@@ -56,7 +56,7 @@ def validation(data_list: list[dict], user_input: dict) -> list or bool:
 
     return team_list
 
-def  ten_medalists_summary(team: list) -> None or str:
+def ten_medalists_summary(team: list) -> None or str:
     if not team: return None
     gold = [x for x in team if x['medal'] == 'Gold']
     silver = [x for x in team if x['medal'] == 'Silver']
@@ -106,7 +106,7 @@ def total_statistic(data_list: list[dict], user_input: dict) -> None:
                 print(f"{f'{key}'} || Gold: {value['Gold']} - Silver: {value['Silver']} - Bronze: {value['Bronze']}|"
                       f" Total: {value['Total']}")
 
-def overall(data_list:list[dict], user_input: dict) -> None:
+def country_data(data_list:list[dict], user_input: dict) -> dict:
     overall_dict = {}
 
     for element in data_list:
@@ -136,16 +136,19 @@ def overall(data_list:list[dict], user_input: dict) -> None:
                     case "Silver": overall_dict[element['team']][element['year']]['Rate'] += 2
                     case "Bronze": overall_dict[element['team']][element['year']]['Rate'] += 1
 
+    return overall_dict
 
-
-    print(overall_dict)
+def overall(data: dict) -> None:
+    for key, element in data.items():
+        element = sorted(element.items(), key=lambda x: x[1]['Rate'], reverse=True)[0]
+        print(f"{key} — {element[0]} — Total: {element[1]['Total']}")
 
 def main():
     args = get_args()
 
     if args['total']: total_statistic(get_data(), args)
     elif args['medals']: ten_medalists_summary(validation(get_data(), get_medals(args)))
-    elif args['overall']: overall(get_data(), args)
-    else: print("Write either -medals or -total")
+    elif args['overall']: overall(country_data(get_data(), args))
+    else: print("Write -medals or -total or -overall")
 
 main()
